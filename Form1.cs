@@ -418,7 +418,7 @@ namespace WinFormsApp1321
 
             // 状态更新
             isOn = false;
-            button2.Text = "进入检测模式";  /
+            button2.Text = "进入检测模式";  
             label1.Text = "当前状态：待机状态";  
         }
 
