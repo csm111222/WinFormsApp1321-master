@@ -29,166 +29,270 @@ namespace WinFormsApp1321
             _tcpServer = new TCPServer(_plcClient, _scanGangBasic);
         }
 
-     
-        /*  private async void button1_Click(object sender, EventArgs e)
-          {
-              // 调用 WriteDRegisterAsync 方法, 写入 D 寄存器进入自校准模式
-              bool writeSuccess = await _plcClient.WriteDRegisterAsync(2130, 3);
-
-              // 如果写入成功，才继续执行文件选择窗口
-              if (writeSuccess)
-              {
-                  // 进入自校准模式后，弹出文件选择窗口
-                  SelectionForm selectionForm = new SelectionForm();
-                  selectionForm.ShowDialog();
-
-                  if (selectionForm.DialogResult == DialogResult.OK)
-                  {
-                      // 放入样棒框
-                      DialogResult result = MessageBox.Show(
-                          $"系统文件：C:\\system\\system.ini\n" +
-                          $"标样文件：{selectionForm.StandardFilePath}\n" +
-                          $"标定循环次数：{selectionForm.CalibrationCount}\n" +
-                          $"时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}\n\n" +
-                          "放入样棒后点击确认？",
-                          "放入样棒",
-                          MessageBoxButtons.OKCancel,
-                          MessageBoxIcon.Question
-                      );
-
-                      // 如果点击了“取消”，则直接返回
-                      if (result == DialogResult.Cancel)
-                      {
-                          MessageBox.Show("操作已取消，自校准模式未开启。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                          return;
-                      }
-
-                      string selectedStandardFile = selectionForm.StandardFilePath;
-                      totalCycles = selectionForm.CalibrationCount;
-                      currentCycle = 0;
-
-
-                      // 更新状态
-                      isOn = true;
-                      button1.Text = "自校准模式已开启";
-                      label1.Text = "当前状态：自校准模式";
-                      button2.Enabled = false;
-
-                      // 确认后，创建 循环任务 并启动循环
-                      cancellationTokenSource = new CancellationTokenSource();
-                      CancellationToken token = cancellationTokenSource.Token;
-                       Task.Run(() => RunCalibrationLoop(selectedStandardFile, token));
 
 
 
-                  }
-              }
-              else
-              {
-                  // 写入 D 寄存器失败时，弹出错误提示
-                  MessageBox.Show("无法写入 D 寄存器！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                  StopCalibration(true);
-              }
-          }*/
+
+        /*     private async void button1_Click(object sender, EventArgs e)
+             {
+                 // 判断当前状态
+                 if (!isOn)
+                 {
+                     Console.WriteLine("尝试启动自校准模式...");
+
+                     // 寄存器写入 3，表示启动自校准模式
+                     bool writeSuccess = await _plcClient.WriteDRegisterAsync(2130, 3);
+
+                     if (writeSuccess)
+                     {
+                         // 写入成功，进入自校准模式，弹出文件选择窗口
+                         SelectionForm selectionForm = new SelectionForm();
+                         selectionForm.ShowDialog();
+
+                         if (selectionForm.DialogResult == DialogResult.OK)
+                         {
+                             // 放入样棒框
+                             DialogResult result = MessageBox.Show(
+                                 $"系统文件：C:\\system\\system.ini\n" +
+                                 $"标样文件：{selectionForm.StandardFilePath}\n" +
+                                 $"标定循环次数：{selectionForm.CalibrationCount}\n" +
+                                 $"时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}\n\n" +
+                                 "放入样棒后点击确认？",
+                                 "放入样棒",
+                                 MessageBoxButtons.OKCancel,
+                                 MessageBoxIcon.Question
+                             );
+
+                             if (result == DialogResult.Cancel)
+                             {
+                                 MessageBox.Show("操作已取消，自校准模式未开启。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                 return;
+                             }
+                             byte[] response = await _plcClient.ReadDRegisterAsync(2132);
+                             if (response != null && response.Length >= 15)
+                             {
+                                 byte scanAreaStatus = response[13];  
+
+                                 // 判断扫码区是否存在样棒或待检棒
+                                 if (scanAreaStatus == 1)
+                                 {
+                                     MessageBox.Show("扫码区存在样棒或待检棒，发送扫码成功", "扫码成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                                     // 发送扫码成功信号给 PLC
+
+                                     bool confirmWriteSuccess = await _plcClient.WriteDRegisterAsync(2132, 3);
+                                     if (!confirmWriteSuccess)
+                                     {
+                                         MessageBox.Show("无法通知 PLC 开始循环（D2132 = 3 失败）", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                         return;
+                                     }
+                                     string selectedStandardFile = selectionForm.StandardFilePath;
+                                     totalCycles = selectionForm.CalibrationCount;
+                                     currentCycle = 0;
+
+                                     isOn = true;
+                                     button1.Text = "自校准模式已开启";
+                                     label1.Text = "当前状态：自校准模式";
+                                     button2.Enabled = false;
+
+                                     // 启动循环任务
+                                     cancellationTokenSource = new CancellationTokenSource();
+                                     CancellationToken token = cancellationTokenSource.Token;
+                                     Task.Run(() => RunCalibrationLoop(selectedStandardFile, token));
+
+                                 }
+                                 else
+                                 {
+                                     MessageBox.Show("扫码区没有样棒或待检棒", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                                     return;
+                                 }
+                             }
+
+
+                         }
+                     }
+                     else
+                     {
+                       *//*  bool errorReportSuccess = await _plcClient.WriteDRegisterAsync(2135, 1);
+                         if (errorReportSuccess)
+                         {
+                             MessageBox.Show("无法向 D2135 发送异常报告！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                         }*//*
+
+                       //  MessageBox.Show("无法写入 D 寄存器！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                         StopCalibration(true);
+                     }
+                 }
+                 else  
+                 {
+                     Console.WriteLine("尝试停止自校准模式...");
+
+
+                     bool writeSuccess = await _plcClient.WriteDRegisterAsync(2133, 1);
+
+                     if (writeSuccess)
+                     {
+
+                         StopCalibration(false);
+
+
+                         isOn = false; 
+                         button1.Text = "启动自校准模式";
+                         label1.Text = "当前状态：待机状态";
+                         button2.Enabled = false;
+                     }
+                     else
+                     {
+                         // 写入 D 寄存器失败时，弹出错误提示
+                         MessageBox.Show("无法停止自校准模式，写入 D 寄存器失败！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                     }
+                 }
+             }
+     */
+        private async Task<bool> StartCalibrationMode()
+        {
+            Console.WriteLine("尝试启动自校准模式...");
+
+            bool writeSuccess = await _plcClient.WriteDRegisterAsync(2130, 3);  // 写入启动自校准模式信号
+
+            return writeSuccess;
+        }
+        private SelectionForm ShowSelectionForm()
+        {
+            SelectionForm selectionForm = new SelectionForm();
+            selectionForm.ShowDialog();
+            return selectionForm;
+        }
+
+        private bool ShowConfirmationDialog(SelectionForm selectionForm)
+        {
+            DialogResult result = MessageBox.Show(
+                $"系统文件：C:\\system\\system.ini\n" +
+                $"标样文件：{selectionForm.StandardFilePath}\n" +
+                $"标定循环次数：{selectionForm.CalibrationCount}\n" +
+                $"时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}\n\n" +
+                "放入样棒后点击确认？",
+                "放入样棒",
+                MessageBoxButtons.OKCancel,
+                MessageBoxIcon.Question
+            );
+
+            return result == DialogResult.OK;
+        }
+
+        private async Task<bool> CheckScanArea()
+        {
+            // 读取 D2132 寄存器的值
+            byte[] response = await _plcClient.ReadDRegisterAsync(2132);  // 从 D2132 读取数据
+
+            if (response != null && response.Length >= 15)
+            {
+                byte scanAreaStatus = response[13];  
+
+                if (scanAreaStatus == 1)
+                {
+                    return true;  // 扫码区有试件
+                }
+                else
+                {
+                    MessageBox.Show("扫码区没有试件", "无试件", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return false;  // 没有试件
+                }
+            }
+            else
+            {
+                MessageBox.Show("无法读取 D2132 寄存器", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return false;
+            }
+        }
+
+
+
+        private void StartCalibrationLoop(SelectionForm selectionForm)
+        {
+            string selectedStandardFile = selectionForm.StandardFilePath;
+            totalCycles = selectionForm.CalibrationCount;
+            currentCycle = 0;
+
+            isOn = true;
+            button1.Text = "自校准模式已开启";
+            label1.Text = "当前状态：自校准模式";
+            button2.Enabled = false;
+
+            // 启动循环任务
+            cancellationTokenSource = new CancellationTokenSource();
+            CancellationToken token = cancellationTokenSource.Token;
+            Task.Run(() => RunCalibrationLoop(selectedStandardFile, token));
+        }
+        private async Task<bool> StopCalibrationMode()
+        {
+            Console.WriteLine("尝试停止自校准模式...");
+
+            bool writeSuccess = await _plcClient.WriteDRegisterAsync(2133, 1);  // 写入停止自校准模式信号
+
+            return writeSuccess;
+        }
         private async void button1_Click(object sender, EventArgs e)
         {
-            // 判断当前状态
             if (!isOn)
             {
-                Console.WriteLine("尝试启动自校准模式...");
+                // 启动自校准模式
+                bool startSuccess = await StartCalibrationMode();
 
-                // 寄存器写入 3，表示启动自校准模式
-                bool writeSuccess = await _plcClient.WriteDRegisterAsync(2130, 3);
-
-                if (writeSuccess)
+                if (startSuccess)
                 {
-                    // 写入成功，进入自校准模式，弹出文件选择窗口
-                    SelectionForm selectionForm = new SelectionForm();
-                    selectionForm.ShowDialog();
-
-                    if (selectionForm.DialogResult == DialogResult.OK)
+                    // 弹出选择框并显示确认提示
+                    SelectionForm selectionForm = ShowSelectionForm();
+                    if (selectionForm.DialogResult == DialogResult.OK && ShowConfirmationDialog(selectionForm))
                     {
-                        // 放入样棒框
-                        DialogResult result = MessageBox.Show(
-                            $"系统文件：C:\\system\\system.ini\n" +
-                            $"标样文件：{selectionForm.StandardFilePath}\n" +
-                            $"标定循环次数：{selectionForm.CalibrationCount}\n" +
-                            $"时间：{DateTime.Now:yyyy-MM-dd HH:mm:ss}\n\n" +
-                            "放入样棒后点击确认？",
-                            "放入样棒",
-                            MessageBoxButtons.OKCancel,
-                            MessageBoxIcon.Question
-                        );
-
-                        if (result == DialogResult.Cancel)
+                        // 检查扫码区
+                        bool scanSuccess = await CheckScanArea();
+                        if (scanSuccess)
                         {
-                            MessageBox.Show("操作已取消，自校准模式未开启。", "提示", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                            return;
-                        }
-                      
+                            MessageBox.Show("扫码区存在样棒或待检棒，发送扫码成功", "扫码成功", MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                      
-                        bool confirmWriteSuccess = await _plcClient.WriteDRegisterAsync(2132, 3);
-                        if (!confirmWriteSuccess)
+                            // 发送扫码成功信号
+                            bool confirmWriteSuccess = await _plcClient.WriteDRegisterAsync(2132, 3); // 启动循环信号
+                            if (!confirmWriteSuccess)
+                            {
+                                MessageBox.Show("无法通知 PLC 开始循环（D2132 = 3 失败）", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                                return;
+                            }
+
+                            // 启动校准循环
+                            StartCalibrationLoop(selectionForm);
+                        }
+                        else
                         {
-                            MessageBox.Show("无法通知 PLC 开始循环（D2132 = 3 失败）", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                            return;
+                            MessageBox.Show("扫码区没有样棒或待检棒", "提示", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
-                        string selectedStandardFile = selectionForm.StandardFilePath;
-                        totalCycles = selectionForm.CalibrationCount;
-                        currentCycle = 0;
-
-                        isOn = true; 
-                        button1.Text = "自校准模式已开启";
-                        label1.Text = "当前状态：自校准模式";
-                        button2.Enabled = false;
-
-                        // 启动循环任务
-                        cancellationTokenSource = new CancellationTokenSource();
-                        CancellationToken token = cancellationTokenSource.Token;
-                        Task.Run(() => RunCalibrationLoop(selectedStandardFile, token));
                     }
                 }
                 else
                 {
-                    bool errorReportSuccess = await _plcClient.WriteDRegisterAsync(2135, 1);
-                    if (errorReportSuccess)
-                    {
-                        MessageBox.Show("无法向 D2135 发送异常报告！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                    }
-
-                  //  MessageBox.Show("无法写入 D 寄存器！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("无法启动自校准模式，写入 D 寄存器失败！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     StopCalibration(true);
                 }
             }
-            else  
+            else
             {
-                Console.WriteLine("尝试停止自校准模式...");
+                // 停止自校准模式
+                bool stopSuccess = await StopCalibrationMode();
 
-               
-                bool writeSuccess = await _plcClient.WriteDRegisterAsync(2133, 1);
-
-                if (writeSuccess)
+                if (stopSuccess)
                 {
-                   
                     StopCalibration(false);
-
-
-                    isOn = false; 
+                    isOn = false;
                     button1.Text = "启动自校准模式";
                     label1.Text = "当前状态：待机状态";
                     button2.Enabled = false;
                 }
                 else
                 {
-                    // 写入 D 寄存器失败时，弹出错误提示
                     MessageBox.Show("无法停止自校准模式，写入 D 寄存器失败！", "错误", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
-
-
-
 
         /* private async void button2_Click(object sender, EventArgs e)
          {
